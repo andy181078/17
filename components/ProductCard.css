@@ -1,0 +1,11 @@
+.ProductCard  {
+  color: rgb(132, 0, 255);
+  
+}
+.ProductCard .ProductImg {
+  width: 450px;
+  height: 450px;
+}
+.ProductCard .ProductEach {
+  color:rgb(71, 157, 255)
+}

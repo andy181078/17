@@ -1,0 +1,34 @@
+.ProductRow .Img {
+  width: 80px;
+  height: 80px;
+}
+
+.ProductRow .Main {
+  border: 1px solid blueviolet;
+  color:brown;
+  font-size: 15px;
+}
+
+.ProductRow .Main1 {
+  border: 1px solid blueviolet;
+  color:brown;
+  font-size: 15px;
+  text-align: center;
+}
+
+
+.ProductRow .Main .DelButton,
+.EditButton {
+  width: 100%;
+}
+
+.ProductRowSelect {
+  background-color: rgb(181, 137, 221);
+}
+.PageLink {
+  color: black;
+  margin-right: 1px;
+}
+.ActivePageLink {
+  font-weight: bold;
+}

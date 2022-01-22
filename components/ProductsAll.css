@@ -1,0 +1,13 @@
+.ProductsAll {
+  border: 1px solid blueviolet;
+  border-collapse: collapse;
+  
+}
+
+.ProductsAll .Main {
+  border: 1px solid blueviolet;
+  color: green;
+  padding: 3px;
+  font-size: 20px;
+  
+}
