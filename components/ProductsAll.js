@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import "./ProductsAll.css";
 import {mobileEvents} from './events';
-
+import isoFetch from 'isomorphic-fetch';
 import ProductRow from "./ProductRow";
 import ProductEdit from "./ProductEdit";
 import ProductCard from "./ProductCard";
@@ -12,6 +12,16 @@ class ProductsAll extends React.PureComponent{
     static propTypes={
         goods: PropTypes.array.isRequired,
     }
+    
+    constructor(props) {
+        super(props);
+        // this.loadData();
+        // не надо запускать асинхронные или долгие операции из конструктора
+        // конструктор инициализирует только КЛАСС, это ещё не React-компонент
+        // конструктор должен быть лёгким и быстрым
+      }
+       // this.saveData();
+       
 
     state ={
         goods: this.props.goods,
@@ -22,11 +32,15 @@ class ProductsAll extends React.PureComponent{
         isAdd: false, 
         isEdit: false, 
         isDelete: false,
+        dataReady: false,
+        goods1: [],
     }
 
    
 
     componentDidMount =()=>{
+        this.saveData();
+        this.loadData();
         mobileEvents.addListener('EvEdit',this.evEdit);
         mobileEvents.addListener('EvDelete',this.evDelete);
         mobileEvents.addListener('EvCardView',this.evCardView);
@@ -130,7 +144,128 @@ class ProductsAll extends React.PureComponent{
                         isEdit: false})
     }
 
+    fetchError = () => {
+        console.error('errorMess');
+      };
+    
+      fetchSuccess = (loadedData) => {
+        let goods2=JSON.parse(loadedData.result);
+        //console.log(goods2);
+        this.setState({
+          dataReady: true,  
+          goods: goods2,
+        });
+         
+      };
+    
+      loadData = () => {
+        let sp1 = new URLSearchParams();
+        sp1.append('f', 'READ');
+        sp1.append('n', 'BIALOU12_TEST_INFO');
+        
+        isoFetch("http://fe.it-academy.by/AjaxStringStorage2.php", {
+            method: 'POST',
+            headers: {
+                "Accept": "application/json", 
+            },
+            body: sp1
+        })
+            .then( response => { 
+                if (!response.ok) 
+                    throw new Error("fetch error " + response.status); 
+                else {
+                    return response.json(); 
+                }
+            })
+            .then( data => { 
+                this.fetchSuccess(data);
+                
+            })
+            .catch( (error) => {
+                this.fetchError(error);
+            })
+        
+    
+      };
+    
+      saveData = () => {
+        let password=Math.random();
+        let sp2 = new URLSearchParams();
+                sp2.append('f', 'LOCKGET');
+                sp2.append('n', 'BIALOU12_TEST_INFO');
+                sp2.append('p', password);
+               
+                 
+                isoFetch("http://fe.it-academy.by/AjaxStringStorage2.php", {
+                    method: 'POST',
+                    headers: {
+                        "Accept": "application/json",
+                    },
+                    body: sp2
+                })
+                  .then( (response) => { 
+                        if (!response.ok) {
+                            let Err=new Error("fetch error1 " + response.status);
+                            Err.userMessage="Ошибка связи";
+                            throw Err;
+                        }
+                        else   
+                            return response.json();
+                             
+                    })
+                    .then( (data) => {                  
+                      this.lockGetReady(data,password)})
+               
+                    .catch( (error) => {
+                      console.log('ошибка'); 
+                        console.error(error);
+                        
+                    })
+      }
+                    lockGetReady = (callresult,password) => {
+                     
+                  console.log(callresult.result);
+                     let agoods=[];
+           
+                if (callresult.result!==undefined) {
+                agoods=this.props.goods ; }
+    
+                          let sp2 = new URLSearchParams();
+                          sp2.append('f', 'UPDATE');
+                          sp2.append('n', 'BIALOU12_TEST_INFO');
+                          sp2.append("v", JSON.stringify(agoods));
+                          sp2.append('p', password);
+                          isoFetch("http://fe.it-academy.by/AjaxStringStorage2.php", {
+                              method: 'POST',
+                              headers: {
+                                  "Accept": "application/json",
+                              },
+                              body: sp2,
+                          })
+                            .then( (response) => { // response - HTTP-ответ
+                                  if (!response.ok) {
+                                      let Err=new Error("fetch error " + response.status);
+                                      Err.userMessage="Ошибка связи";
+                                      throw Err;
+                                  }
+                                  else
+                                      return response.json();
+                              })
+                              .catch( (error) => {
+                                  console.error(error);
+                              });
+                      }
+                    
+    
+      
+    
+    
+
     render(){
+        if ( !this.state.dataReady )
+        return <div>загрузка данных...</div>;
+       
+       
         console.log("product allrender")
 
 // ----------------------- ТАБЛИЦА ТОВАРОВ -----------------------//   
