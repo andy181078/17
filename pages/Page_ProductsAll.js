@@ -1,7 +1,8 @@
 import React from 'react';
 
-import ProductsAll from '../components/ProductsAll';
+import ProductsAllmain from '../components/ProductsAllmain';
 import goodsArr from "../goodsArr.json";
+
 
 
 class Page_ProductsAll extends React.PureComponent {
@@ -9,7 +10,7 @@ class Page_ProductsAll extends React.PureComponent {
   render() {
 
     return (
-      <ProductsAll
+      <ProductsAllmain
       goods={goodsArr}
       />
     );

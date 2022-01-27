@@ -6,11 +6,15 @@ import {mobileEvents} from './events';
 import isoFetch from 'isomorphic-fetch';
 import ProductRow from "./ProductRow";
 import ProductEdit from "./ProductEdit";
-import ProductCard from "./ProductCard";
+import {connect} from 'react-redux';
+import { productsLoadingAC, productsErrorAC, productsSetAC } from "../redux/productsAC";
+import { sortsPriceAC, sortsAmountAC } from "../redux/sortsAC";
 
 class ProductsAll extends React.PureComponent{
     static propTypes={
         goods: PropTypes.array.isRequired,
+        products: PropTypes.object.isRequired, 
+        sorts: PropTypes.object.isRequired 
     }
     
     constructor(props) {
@@ -34,6 +38,7 @@ class ProductsAll extends React.PureComponent{
         isDelete: false,
         dataReady: false,
         goods1: [],
+        
     }
 
    
@@ -65,6 +70,27 @@ class ProductsAll extends React.PureComponent{
     
 
     
+   // result=result.filter(s=>s.text.includes(filter));
+  // result=result.sort((a, b) => a.text.localeCompare(b.text)
+
+  sortPrice=()=>{
+    this.props.dispatch( sortsPriceAC(this.state.goods));
+    //this.setState({
+    //    goods: this.props.sorts           
+   // })   
+}
+
+//result=result.sort((a, b) => a.quant.localeCompare(b.quant))
+
+  sortAmount=()=>{
+    this.props.dispatch( sortsAmountAC(this.state.goods));
+  //  this.setState({
+    //    goods: this.props.sorts           
+//    })   
+} 
+
+
+  
 
 
     evChanged=(bool)=>{
@@ -96,7 +122,6 @@ class ProductsAll extends React.PureComponent{
     add=()=>{
         if (!this.state.isChanged && !this.state.isEdit){
             let code=this.state.goods.length+1
-            
             this.setState({
                 selectedProductCode: code,
                 cardMode: 2, 
@@ -106,19 +131,19 @@ class ProductsAll extends React.PureComponent{
     }
 
     evSave=(res)=>{
-        let edit=[...this.state.goods]
-        edit=edit.map(v=>(v.code==res.code)?res:v)
+        let edit=this.state.goods;
+        edit=edit.map(v=>(v.code==res.code)?res:v)    
+        this.saveData();
         this.setState({
-            cardMode: 0, 
             goods: edit,
-            isEdit: false
+            isEdit: false, 
+            cardMode: 0 
         })
+        
     }
 
     evAdd=(res)=>{
         this.state.goods.push(res)
-        
-       
         this.setState({
             cardMode: 0, 
             
@@ -138,30 +163,24 @@ class ProductsAll extends React.PureComponent{
             } 
         }
     }
+ 
+    
+
+
+
 
     evCancel=()=>{
         this.setState({ cardMode: 0,
                         isEdit: false})
     }
 
-    fetchError = () => {
-        console.error('errorMess');
-      };
-    
-      fetchSuccess = (loadedData) => {
-        let goods2=JSON.parse(loadedData.result);
-        //console.log(goods2);
-        this.setState({
-          dataReady: true,  
-          goods: goods2,
-        });
-         
-      };
+  
     
       loadData = () => {
+        this.props.dispatch( productsLoadingAC() )  
         let sp1 = new URLSearchParams();
         sp1.append('f', 'READ');
-        sp1.append('n', 'BIALOU12_TEST_INFO');
+        sp1.append('n', 'BIALOU14_TEST_INFO');
         
         isoFetch("http://fe.it-academy.by/AjaxStringStorage2.php", {
             method: 'POST',
@@ -170,20 +189,20 @@ class ProductsAll extends React.PureComponent{
             },
             body: sp1
         })
-            .then( response => { 
-                if (!response.ok) 
-                    throw new Error("fetch error " + response.status); 
-                else {
-                    return response.json(); 
-                }
-            })
-            .then( data => { 
-                this.fetchSuccess(data);
-                
-            })
-            .catch( (error) => {
-                this.fetchError(error);
-            })
+        .then( response => { 
+            if (!response.ok) 
+                throw new Error("fetch error " + response.status); 
+            else {
+                return response.json(); 
+            }
+        })
+        .then( data => { 
+            this.props.dispatch( productsSetAC(data));  
+        })
+        .catch( (error) => {
+            this.fetchError(error);
+            this.props.dispatch( productsErrorAC());
+        })
         
     
       };
@@ -192,7 +211,7 @@ class ProductsAll extends React.PureComponent{
         let password=Math.random();
         let sp2 = new URLSearchParams();
                 sp2.append('f', 'LOCKGET');
-                sp2.append('n', 'BIALOU12_TEST_INFO');
+                sp2.append('n', 'BIALOU14_TEST_INFO');
                 sp2.append('p', password);
                
                  
@@ -214,7 +233,7 @@ class ProductsAll extends React.PureComponent{
                              
                     })
                     .then( (data) => {                  
-                      this.lockGetReady(data,password)})
+                      this.lockGetReady(data,password,aaa)})
                
                     .catch( (error) => {
                       console.log('ошибка'); 
@@ -262,8 +281,12 @@ class ProductsAll extends React.PureComponent{
     
 
     render(){
-        if ( !this.state.dataReady )
-        return <div>загрузка данных...</div>;
+        if ( this.props.products.status<=1 )
+        return "загрузка...";
+    
+      if ( this.props.products.status===2 )
+        return "ошибка загрузки данных";
+        
        
        
         console.log("product allrender")
@@ -308,8 +331,8 @@ let selectedRow=[...this.state.goods]
             </table>
            
             <input type='button' value='Новый товар' onClick={this.add} disabled={this.state.isChanged||this.state.isEdit}/>
-
- 
+            <input type='button' value='Сортировка по цене' onClick={this.sortPrice} disabled={this.state.isChanged||this.state.isEdit}/> 
+            <input type='button' value='Сортировка по количеству' onClick={this.sortAmount} disabled={this.state.isChanged||this.state.isEdit}/> 
 
 {/*----------------------- ПРОСМОТР КАРТОЧКИ -----------------------*/}            
             {/* 
@@ -334,5 +357,13 @@ let selectedRow=[...this.state.goods]
     }
 };
 
-export default ProductsAll;
+const mapStateToProps = function (state) {
+    return {
+      products: state.products,
+      sorts: state.sorts,
+    };
+  };
+  
+  export default connect(mapStateToProps)(ProductsAll);
+
     
